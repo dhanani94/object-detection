@@ -23,10 +23,11 @@ else:
     PORT=5000
 
 if os.getenv('CAMERA'):
-    Camera = import_module('src.camera_' + os.environ['CAMERA']).Camera
-    Predictor = import_module('src.camera_' + os.environ['CAMERA']).Predictor
+    env_cam = os.environ['CAMERA']
+    Camera = import_module(f'src.camera_{env_cam}').Camera
+    Predictor = import_module(f'src.camera_{env_cam}').Predictor
     predictor = Predictor()
-    celery = import_module('src.camera_' + os.environ['CAMERA']).celery
+    celery = import_module(f'src.camera_{env_cam}').celery
 else:
     print('Default USB camera')
     from src.camera_opencv import Camera
@@ -44,7 +45,7 @@ blueprint_html = Blueprint('html', __name__, url_prefix=BASEURL)
 @blueprint_html.route('/', defaults={'filename': 'index.html'})
 @blueprint_html.route('/<path:filename>')
 def show_pages(filename):
-    return send_from_directory('../dist', filename)
+    return send_from_directory('./dist', filename)
 app.register_blueprint(blueprint_html)
 
 # API
