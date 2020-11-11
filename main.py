@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 from datetime import datetime
 from flask import Flask, Response, send_from_directory, request, Blueprint, abort
 from src.utils import (reduce_month, reduce_year, reduce_hour,
-        reduce_object, reduce_tracking, img_to_base64)
+                       reduce_object, reduce_tracking, img_to_base64)
 
 WIDTH = 320
 HEIGHT = 240
@@ -20,7 +20,7 @@ load_dotenv('.env')
 if os.getenv('PORT'):
     PORT = int(str(os.getenv('PORT')))
 else:
-    PORT=5000
+    PORT = 5000
 
 if os.getenv('CAMERA'):
     env_cam = os.environ['CAMERA']
@@ -33,23 +33,27 @@ else:
     from src.camera_opencv import Camera
 
 if os.getenv('BASEURL') and os.getenv('BASEURL') is not None:
-    BASEURL=os.getenv('BASEURL').replace('\\', '')
+    BASEURL = os.getenv('BASEURL').replace('\\', '')
 else:
-    BASEURL='/'
+    BASEURL = '/'
 
 app = Flask(__name__)
 
 # static html
 blueprint_html = Blueprint('html', __name__, url_prefix=BASEURL)
 
+
 @blueprint_html.route('/', defaults={'filename': 'index.html'})
 @blueprint_html.route('/<path:filename>')
 def show_pages(filename):
     return send_from_directory('./dist', filename)
+
+
 app.register_blueprint(blueprint_html)
 
 # API
 blueprint_api = Blueprint('api', __name__, url_prefix=BASEURL)
+
 
 @blueprint_api.route(os.path.join('/', IMAGE_FOLDER, '<path:filename>'))
 def image_preview(filename):
@@ -69,8 +73,8 @@ def image_preview(filename):
                     )
             img_h, img_w = im.shape[:-1]
             cv2.putText(
-                    im, "{}".format(date), (0, int(img_h*0.98)),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                im, "{}".format(date), (0, int(img_h * 0.98)),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
         return Response(cv2.imencode('.jpg', im)[1].tobytes(),
                         mimetype='image/jpeg')
 
@@ -90,6 +94,7 @@ def delete_image():
         print(e)
         return abort(404)
 
+
 def get_data(item):
     if 'pi' in item:
         year = item.split('/')[2][:4]
@@ -98,9 +103,9 @@ def get_data(item):
         hour = item.split('/')[3][:2]
         minutes = item.split('/')[3][2:4]
         return dict(
-                path=item, year=year, month=month, day=day,
-                hour=hour, minutes=minutes
-                )
+            path=item, year=year, month=month, day=day,
+            hour=hour, minutes=minutes
+        )
     else:
         return dict(path=item)
 
@@ -130,9 +135,9 @@ def api_images():
           myminutes != "??" or
           mydetection != "*"):
         mypath = os.path.join(
-                              IMAGE_FOLDER, '**',
-                              f'{myyear}{mymonth}{myday}',
-                              f'{myhour.zfill(2)}{myminutes}??*{mydetection}*.jpg')
+            IMAGE_FOLDER, '**',
+            f'{myyear}{mymonth}{myday}',
+            f'{myhour.zfill(2)}{myminutes}??*{mydetection}*.jpg')
         myiter = glob.iglob(mypath, recursive=True)
     else:
         myiter = glob.iglob(os.path.join(IMAGE_FOLDER, '**', '*.jpg'),
@@ -155,16 +160,17 @@ def single_image():
     elif tracking:
         frame = predictor.object_track(frame, conf_th=0.5, conf_class=[1])
     return json.dumps(dict(img=img_to_base64(frame),
-                      width=WIDTH,
-                      height=HEIGHT))
+                           width=WIDTH,
+                           height=HEIGHT))
+
 
 myconditions = dict(
-        month=reduce_month,
-        year=reduce_year,
-        hour=reduce_hour,
-        detected_object=reduce_object,
-        tracking_object=reduce_tracking,
-        )
+    month=reduce_month,
+    year=reduce_year,
+    hour=reduce_hour,
+    detected_object=reduce_object,
+    tracking_object=reduce_tracking,
+)
 
 
 @blueprint_api.route('/api/list_files')
@@ -172,7 +178,7 @@ def list_folder():
     condition = request.args.get('condition', 'year')
     myiter = glob.iglob(os.path.join(IMAGE_FOLDER, '**', '*.jpg'),
                         recursive=True)
-    newdict = reduce(lambda a, b: myconditions[condition](a,b), myiter, dict())
+    newdict = reduce(lambda a, b: myconditions[condition](a, b), myiter, dict())
     # year = item.split('/')[2][:4]
     # month = item.split('/')[2][4:6]
     # day = item.split('/')[2][6:8]
@@ -184,7 +190,7 @@ def list_folder():
 
 @blueprint_api.route('/api/task/status/<task_id>')
 def taskstatus(task_id):
-    #task = ObjectTracking.AsyncResult(task_id)
+    # task = ObjectTracking.AsyncResult(task_id)
     task = predictor.continous_object_tracking.AsyncResult(task_id)
     if task.state == 'PENDING':
         response = {
@@ -207,21 +213,24 @@ def taskstatus(task_id):
 @blueprint_api.route('/api/task/launch')
 def launch_object_tracking():
     task = predictor.ObjectTracking.delay()
-    #task = predictor.continous_object_tracking.delay()
+    # task = predictor.continous_object_tracking.delay()
     return json.dumps({"task_id": task.id})
+
 
 @blueprint_api.route('/api/task/kill/<task_id>')
 def killtask(task_id):
     response = celery.control.revoke(task_id, terminate=True, wait=True, timeout=10)
     return json.dumps(response)
 
+
 @blueprint_api.route('/api/beat/launch')
 def launch_beat():
     task = predictor.PeriodicCaptureContinous.delay()
     return json.dumps({"task_id": task.id})
 
-#@blueprint_api.route('/tracking/read')
-#def read_tracking():
+
+# @blueprint_api.route('/tracking/read')
+# def read_tracking():
 #    df =pd.read_csv('{}/tracking.csv'.format(IMAGE_FOLDER), header=None, names=['date', 'hour', 'idx', 'coord'])
 #    print(df.head())
 #    print(df.to_dict(orient='records'))
@@ -231,8 +240,8 @@ app.register_blueprint(blueprint_api)
 
 if __name__ == '__main__':
     app.run(
-            host='0.0.0.0',
-            debug=bool(os.getenv('DEBUG')),
-            threaded=False,
-            port=PORT
-            )
+        host='0.0.0.0',
+        debug=bool(os.getenv('DEBUG')),
+        threaded=False,
+        port=PORT
+    )
