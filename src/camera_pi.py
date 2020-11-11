@@ -11,12 +11,12 @@ from importlib import import_module
 from picamera.array import PiRGBArray
 from picamera import PiCamera
 from dotenv import load_dotenv
-from backend.centroidtracker import CentroidTracker
-from backend.base_camera import BaseCamera
-from backend.utils import reduce_tracking
+from centroidtracker import CentroidTracker
+from base_camera import BaseCamera
+from utils import reduce_tracking
 
 load_dotenv()
-Detector = import_module('backend.' + os.environ['DETECTION_MODEL']).Detector
+Detector = import_module('' + os.environ['DETECTION_MODEL']).Detector
 detector = None
 ct = None
 

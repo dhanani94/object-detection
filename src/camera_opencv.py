@@ -7,12 +7,12 @@ from functools import reduce
 from dotenv import load_dotenv
 from importlib import import_module
 from datetime import datetime, timedelta
-from backend.centroidtracker import CentroidTracker
-from backend.base_camera import BaseCamera
-from backend.utils import reduce_tracking
+from src.centroidtracker import CentroidTracker
+from src.base_camera import BaseCamera
+from src.utils import reduce_tracking
 
 load_dotenv()
-Detector = import_module('backend.' + os.environ['DETECTION_MODEL']).Detector
+Detector = import_module('src.' + os.environ['DETECTION_MODEL']).Detector
 detector = None
 ct = None
 

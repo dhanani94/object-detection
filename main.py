@@ -10,7 +10,7 @@ from itertools import islice
 from dotenv import load_dotenv
 from datetime import datetime
 from flask import Flask, Response, send_from_directory, request, Blueprint, abort
-from backend.utils import (reduce_month, reduce_year, reduce_hour,
+from src.utils import (reduce_month, reduce_year, reduce_hour,
         reduce_object, reduce_tracking, img_to_base64)
 
 WIDTH = 320
@@ -23,13 +23,13 @@ else:
     PORT=5000
 
 if os.getenv('CAMERA'):
-    Camera = import_module('backend.camera_' + os.environ['CAMERA']).Camera
-    Predictor = import_module('backend.camera_' + os.environ['CAMERA']).Predictor
+    Camera = import_module('src.camera_' + os.environ['CAMERA']).Camera
+    Predictor = import_module('src.camera_' + os.environ['CAMERA']).Predictor
     predictor = Predictor()
-    celery = import_module('backend.camera_' + os.environ['CAMERA']).celery
+    celery = import_module('src.camera_' + os.environ['CAMERA']).celery
 else:
     print('Default USB camera')
-    from backend.camera_opencv import Camera
+    from src.camera_opencv import Camera
 
 if os.getenv('BASEURL') and os.getenv('BASEURL') is not None:
     BASEURL=os.getenv('BASEURL').replace('\\', '')

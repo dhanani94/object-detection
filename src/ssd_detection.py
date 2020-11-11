@@ -3,7 +3,7 @@ import json
 import cv2
 import numpy as np
 import pandas as pd
-from backend.utils import timeit, draw_boxed_text
+from src.utils import timeit, draw_boxed_text
 
 DETECTION_MODEL = 'ssd_mobilenet/'
 SWAPRB = True

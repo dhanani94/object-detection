@@ -3,7 +3,7 @@ import cv2
 import json
 import numpy as np
 import pandas as pd
-from backend.utils import timeit, draw_boxed_text
+from utils import timeit, draw_boxed_text
 
 DETECTION_MODEL = 'yolo'
 THRESHOLD = 0.3
@@ -58,7 +58,7 @@ class Detector():
         return output
 
     @timeit
-    def filter_prediction(self, output, image):
+    def filter_prediction(self, output, image, conf_th=None, conf_class=None):
         image_height, image_width, _ = image.shape
         df = pd.concat([filter_yolo(i) for i in output])
         df = df.assign(
