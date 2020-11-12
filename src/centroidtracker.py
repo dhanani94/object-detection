@@ -1,7 +1,9 @@
-from datetime import datetime, timedelta
+from datetime import datetime
+
 import numpy as np
 
-class CentroidTracker():
+
+class CentroidTracker:
     def __init__(self, maxDisappeared=50, startID=0):
         # initialize the next unique object ID along with two ordered
         # dictionaries used to keep track of mapping a given object
@@ -24,8 +26,9 @@ class CentroidTracker():
         self.nextObjectID += 1
         day = datetime.now().strftime("%Y%m%d")
         hour = datetime.now().strftime("%H%M%S")
-        myCsvRow = "{},{},\"{}\",\"{}\"\n".format(day, hour, list(self.objects.keys()),[x.tolist() for x in list(self.objects.values())])
-        with open('imgs/tracking.csv','a') as fd:
+        myCsvRow = "{},{},\"{}\",\"{}\"\n".format(day, hour, list(self.objects.keys()),
+                                                  [x.tolist() for x in list(self.objects.values())])
+        with open('imgs/tracking.csv', 'a') as fd:
             fd.write(myCsvRow)
 
     def deregister(self, objectID):

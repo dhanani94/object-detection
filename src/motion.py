@@ -1,14 +1,15 @@
 import cv2
+import imutils
 import numpy as np  # type: ignore
 import pandas as pd  # type: ignore
-import imutils
-from backend.utils import timeit
+
+from src.utils import timeit
 
 DELTA_THRESH = 10
 MIN_AREA = 4000
 
 
-class Detector():
+class Detector:
     """Class motion detector"""
 
     @timeit
@@ -25,12 +26,12 @@ class Detector():
         cv2.accumulateWeighted(image, self.avg, 0.5)
         frameDelta = cv2.absdiff(image, cv2.convertScaleAbs(self.avg))
         thresh = cv2.threshold(
-                frameDelta, DELTA_THRESH, 255,
-                cv2.THRESH_BINARY)[1]
+            frameDelta, DELTA_THRESH, 255,
+            cv2.THRESH_BINARY)[1]
         thresh = cv2.dilate(thresh, None, iterations=2)
         cnts = cv2.findContours(
-                thresh.copy(), cv2.RETR_EXTERNAL,
-                cv2.CHAIN_APPROX_SIMPLE)
+            thresh.copy(), cv2.RETR_EXTERNAL,
+            cv2.CHAIN_APPROX_SIMPLE)
         cnts = imutils.grab_contours(cnts)
         self.avg = image.copy().astype(float)
         return cnts
@@ -42,20 +43,20 @@ class Detector():
         else:
             df = pd.DataFrame(output)
             df = df.assign(
-                    area=lambda x: df[0].apply(lambda x: cv2.contourArea(x)),
-                    bounding=lambda x: df[0].apply(lambda x: cv2.boundingRect(x))
-                    )
+                area=lambda x: df[0].apply(lambda x: cv2.contourArea(x)),
+                bounding=lambda x: df[0].apply(lambda x: cv2.boundingRect(x))
+            )
             df = df[df['area'] > MIN_AREA]
             df_filtered = pd.DataFrame(
-                    df['bounding'].values.tolist(), columns=['x1', 'y1', 'w', 'h'])
+                df['bounding'].values.tolist(), columns=['x1', 'y1', 'w', 'h'])
             df_filtered = df_filtered.assign(
-                    x1=lambda x: x['x1'].clip(0),
-                    y1=lambda x: x['y1'].clip(0),
-                    x2=lambda x: (x['x1'] + x['w']),
-                    y2=lambda x: (x['y1'] + x['h']),
-                    label=lambda x: x.index.astype(str),
-                    class_name=lambda x: x.index.astype(str),
-                    )
+                x1=lambda x: x['x1'].clip(0),
+                y1=lambda x: x['y1'].clip(0),
+                x2=lambda x: (x['x1'] + x['w']),
+                y2=lambda x: (x['y1'] + x['h']),
+                label=lambda x: x.index.astype(str),
+                class_name=lambda x: x.index.astype(str),
+            )
             return df_filtered
 
     def draw_boxes(self, image, df):

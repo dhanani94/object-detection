@@ -3,39 +3,21 @@ import os
 import glob
 import cv2
 import json
-import pandas as pd
+import argparse
 from functools import reduce
 from importlib import import_module
 from itertools import islice
-from dotenv import load_dotenv
 from datetime import datetime
+from src.cameras.camera_pi import Camera, Predictor
+
 from flask import Flask, Response, send_from_directory, request, Blueprint, abort
 from src.utils import (reduce_month, reduce_year, reduce_hour,
                        reduce_object, reduce_tracking, img_to_base64)
 
 WIDTH = 320
 HEIGHT = 240
+BASEURL = '/'
 IMAGE_FOLDER = 'imgs'
-load_dotenv('.env')
-if os.getenv('PORT'):
-    PORT = int(str(os.getenv('PORT')))
-else:
-    PORT = 5000
-
-if os.getenv('CAMERA'):
-    env_cam = os.environ['CAMERA']
-    Camera = import_module(f'src.camera_{env_cam}').Camera
-    Predictor = import_module(f'src.camera_{env_cam}').Predictor
-    predictor = Predictor()
-    celery = import_module(f'src.camera_{env_cam}').celery
-else:
-    print('Default USB camera')
-    from src.camera_opencv import Camera
-
-if os.getenv('BASEURL') and os.getenv('BASEURL') is not None:
-    BASEURL = os.getenv('BASEURL').replace('\\', '')
-else:
-    BASEURL = '/'
 
 app = Flask(__name__)
 
@@ -212,36 +194,39 @@ def taskstatus(task_id):
 
 @blueprint_api.route('/api/task/launch')
 def launch_object_tracking():
-    task = predictor.ObjectTracking.delay()
+    task = predictor.object_tracking.delay()
     # task = predictor.continous_object_tracking.delay()
     return json.dumps({"task_id": task.id})
 
 
-@blueprint_api.route('/api/task/kill/<task_id>')
-def killtask(task_id):
-    response = celery.control.revoke(task_id, terminate=True, wait=True, timeout=10)
-    return json.dumps(response)
+# @blueprint_api.route('/api/task/kill/<task_id>')
+# def killtask(task_id):
+#     response = celery.control.revoke(task_id, terminate=True, wait=True, timeout=10)
+#     return json.dumps(response)
 
 
 @blueprint_api.route('/api/beat/launch')
 def launch_beat():
-    task = predictor.PeriodicCaptureContinous.delay()
+    task = predictor.periodic_capture_continous.delay()
     return json.dumps({"task_id": task.id})
 
-
-# @blueprint_api.route('/tracking/read')
-# def read_tracking():
-#    df =pd.read_csv('{}/tracking.csv'.format(IMAGE_FOLDER), header=None, names=['date', 'hour', 'idx', 'coord'])
-#    print(df.head())
-#    print(df.to_dict(orient='records'))
-#    return json.dumps(df.to_dict(orient='records'))
 
 app.register_blueprint(blueprint_api)
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='RPi Object Detector')
+    # parser.add_argument('--device', help='the type of device running [pi, jetson, opencv]', dest='device', default='pi')
+    parser.add_argument('-p', '--port', help='the port we\'re running on', default=5000, dest='port')
+    parser.add_argument('-d', '--detector', help='the target detector [yolo, ssd]', default='yolo', dest='detector')
+    parser.add_argument('-i', '--img_dir', help='the image dir [yolo, ssd]', default='./imgs', dest='image_dir')
+    args = parser.parse_args()
+
+    detector = import_module(f'src.detectors.{args.detector}_detection').Detector()
+    predictor = Predictor(detector, args.image_dir)
+
     app.run(
         host='0.0.0.0',
         debug=bool(os.getenv('DEBUG')),
         threaded=False,
-        port=PORT
+        port=args.port
     )

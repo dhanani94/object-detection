@@ -1,16 +1,16 @@
-import os
-import cv2
-import json
 import ctypes
+import json
+import os
+
+import cv2
 import numpy as np
-import tensorrt as trt
 import pycuda.driver as cuda
-import pycuda.autoinit  # This is needed for initializing CUDA driver
+import tensorrt as trt
 from backend.utils import timeit, draw_boxed_text
 
 conf_th = 0.3
 INPUT_HW = (300, 300)
-OUTPUT_LAYOUT=7
+OUTPUT_LAYOUT = 7
 
 with open(os.path.join('models/ssd_mobilenet/labels.json')) as json_data:
     CLASS_NAMES = json.load(json_data)
@@ -21,7 +21,7 @@ def _preprocess_trt(img, shape=(300, 300)):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     img = cv2.resize(img, shape)
     img = img.transpose((2, 0, 1)).astype(np.float32)
-    img = (2.0/255.0) * img - 1.0
+    img = (2.0 / 255.0) * img - 1.0
     return img
 
 
@@ -74,7 +74,6 @@ class Detector():
         del self.cuda_outputs
         del self.cuda_inputs
 
-
     @timeit
     def prediction(self, img):
         img_resized = _preprocess_trt(img, self.input_shape)
@@ -95,20 +94,19 @@ class Detector():
         output = self.host_outputs[0]
         return output
 
-
     @timeit
     def filter_prediction(self, output, img, conf_th=0.3, conf_class=[]):
         img_h, img_w, _ = img.shape
         boxes, confs, clss = [], [], []
         for prefix in range(0, len(output), OUTPUT_LAYOUT):
-            conf = float(output[prefix+2])
+            conf = float(output[prefix + 2])
             if conf < conf_th:
                 continue
-            x1 = int(output[prefix+3] * img_w)
-            y1 = int(output[prefix+4] * img_h)
-            x2 = int(output[prefix+5] * img_w)
-            y2 = int(output[prefix+6] * img_h)
-            cls = int(output[prefix+1])
+            x1 = int(output[prefix + 3] * img_w)
+            y1 = int(output[prefix + 4] * img_h)
+            x2 = int(output[prefix + 5] * img_w)
+            y2 = int(output[prefix + 6] * img_h)
+            cls = int(output[prefix + 1])
             if len(conf_class) > 0 and cls not in conf_class:
                 continue
             boxes.append((x1, y1, x2, y2))
@@ -121,10 +119,10 @@ class Detector():
             x_min, y_min, x_max, y_max = box[0], box[1], box[2], box[3]
             color = self.colors[cls]
             cv2.rectangle(image, (x_min, y_min), (x_max, y_max), color, 2)
-            txt_loc = (max(x_min+2, 0), max(y_min+2, 0))
+            txt_loc = (max(x_min + 2, 0), max(y_min + 2, 0))
             txt = '{} {:.2f}'.format(CLASS_NAMES[str(cls)], cf)
             image = draw_boxed_text(image, txt, txt_loc, color)
-        return image#[..., ::-1]
+        return image  # [..., ::-1]
 
 
 if __name__ == "__main__":

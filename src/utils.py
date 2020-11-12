@@ -5,6 +5,7 @@ import numpy as np
 import logging
 import time
 import base64
+import json
 
 ALPHA = 0.5
 FONT = cv2.FONT_HERSHEY_PLAIN
@@ -17,24 +18,29 @@ if os.getenv('DEBUG'):
 else:
     level = logging.ERROR
 logging.basicConfig(
-        level=level,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
-        )
+    level=level,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
 logger = logging.getLogger(__name__)
 
 
-def timeit(method):
+def read_json(filename):
+    with open(filename, 'r') as json_data:
+        return json.load(json_data)
 
+
+def timeit(method):
     def timed(*args, **kw):
         ts = time.time()
         result = method(*args, **kw)
         te = time.time()
         logger = logging.getLogger(method.__name__)
-        logger.debug('{} {:.3f} sec'.format(method.__name__, te-ts))
+        logger.debug('{} {:.3f} sec'.format(method.__name__, te - ts))
         return result
 
     return timed
+
 
 def img_to_base64(img):
     """encode as a jpeg image and return it"""
@@ -42,6 +48,7 @@ def img_to_base64(img):
     jpg_as_text = base64.b64encode(buffer)
     base64_string = jpg_as_text.decode('utf-8')
     return base64_string
+
 
 def draw_boxed_text(img, text, topleft, color):
     """Draw a transluent boxed text in white, overlayed on top of a
@@ -69,13 +76,13 @@ def draw_boxed_text(img, text, topleft, color):
     # the patch is used to draw boxed text
     patch = np.zeros((h, w, 3), dtype=np.uint8)
     patch[...] = color
-    cv2.putText(patch, text, (margin+1, h-margin-2), FONT, TEXT_SCALE,
+    cv2.putText(patch, text, (margin + 1, h - margin - 2), FONT, TEXT_SCALE,
                 WHITE, thickness=TEXT_THICKNESS, lineType=cv2.LINE_8)
-    cv2.rectangle(patch, (0, 0), (w-1, h-1), BLACK, thickness=1)
+    cv2.rectangle(patch, (0, 0), (w - 1, h - 1), BLACK, thickness=1)
     w = min(w, img_w - topleft[0])  # clip overlay at image boundary
     h = min(h, img_h - topleft[1])
     # Overlay the boxed text onto region of interest (roi) in img
-    roi = img[topleft[1]:topleft[1]+h, topleft[0]:topleft[0]+w, :]
+    roi = img[topleft[1]:topleft[1] + h, topleft[0]:topleft[0] + w, :]
     cv2.addWeighted(patch[0:h, 0:w, :], ALPHA, roi, 1 - ALPHA, 0, roi)
     return img
 
@@ -88,17 +95,18 @@ def reduce_month(accu, item):
         accu[year] = dict()
     month = item.split('/')[2][4:6]
     if month in accu[year]:
-        accu[year][month] +=1
+        accu[year][month] += 1
     else:
         accu[year][month] = 1
     return accu
+
 
 def reduce_year(accu, item):
     if 'pi' not in item:
         return accu
     year = item.split('/')[2][:4]
     if year in accu:
-        accu[year] +=1
+        accu[year] += 1
     else:
         accu[year] = 1
     return accu
@@ -109,7 +117,7 @@ def reduce_hour(accu, item):
         return accu
     condition = item.split('/')[3][:2]
     if condition in accu:
-        accu[condition] +=1
+        accu[condition] += 1
     else:
         accu[condition] = 1
     return accu
@@ -121,10 +129,11 @@ def reduce_object(accu, item):
     condition = item.split('/')[3].split('_')[1].split('-')
     for val in condition:
         if val in accu:
-            accu[val] +=1
+            accu[val] += 1
         else:
             accu[val] = 1
     return accu
+
 
 def reduce_tracking(accu, item):
     if 'pi' not in item:
@@ -132,7 +141,7 @@ def reduce_tracking(accu, item):
     condition = item.split('/')[3].split('_')[2].split('-')
     for val in condition:
         if val in accu:
-            accu[val] +=1
+            accu[val] += 1
         else:
             accu[val] = 1
     return accu
