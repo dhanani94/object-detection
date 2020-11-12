@@ -1,11 +1,13 @@
 """Utilities for logging."""
-import os
-import cv2
-import numpy as np
-import logging
-import time
 import base64
 import json
+import logging
+import os
+import time
+from logging.handlers import RotatingFileHandler
+
+import cv2
+import numpy as np
 
 ALPHA = 0.5
 FONT = cv2.FONT_HERSHEY_PLAIN
@@ -13,16 +15,34 @@ TEXT_SCALE = 1.0
 TEXT_THICKNESS = 1
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
-if os.getenv('DEBUG'):
-    level = logging.DEBUG
-else:
-    level = logging.ERROR
-logging.basicConfig(
-    level=level,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
-)
+
 logger = logging.getLogger(__name__)
+
+
+def initialise_logger(log_level="info", output_dir="logs"):
+    console_log_level = logging.INFO
+
+    if log_level == "debug":
+        console_log_level = logging.DEBUG
+
+    date_fmt = '%Y-%m-%d %H:%M:%S'
+    p_format = '%(asctime)s.%(msecs)03d %(name)-12s: %(levelname)s: %(message)s'
+
+    if not os.path.isdir(output_dir):
+        os.makedirs(output_dir)
+
+    output_file = "{}/log.txt".format(output_dir)
+
+    console_handler = logging.StreamHandler()
+    logging.basicConfig(level=console_log_level, format=p_format, datefmt=date_fmt, handlers=[console_handler])
+    main_logger = logging.getLogger('')
+
+    # Add file handler to the root main_logger
+    file_handler = RotatingFileHandler(output_file, maxBytes=50000000, backupCount=5)
+    file_log_fmt = logging.Formatter(fmt=p_format, datefmt=date_fmt)
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(file_log_fmt)
+    main_logger.addHandler(file_handler)
 
 
 def read_json(filename):

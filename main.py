@@ -9,11 +9,12 @@ from importlib import import_module
 from itertools import islice
 from datetime import datetime
 from src.cameras.camera_pi import Camera, Predictor
+import logging
 
 from flask import Flask, Response, send_from_directory, request, Blueprint, abort
-from src.utils import (reduce_month, reduce_year, reduce_hour,
-                       reduce_object, reduce_tracking, img_to_base64)
+from src.utils import *
 
+logger = logging.getLogger(__name__)
 WIDTH = 320
 HEIGHT = 240
 BASEURL = '/'
@@ -61,7 +62,7 @@ def image_preview(filename):
                         mimetype='image/jpeg')
 
     except Exception as e:
-        print(e)
+        logger.error(e)
 
     return send_from_directory('.', filename)
 
@@ -73,7 +74,7 @@ def delete_image():
         os.remove(filename)
         return json.dumps({'status': filename})
     except Exception as e:
-        print(e)
+        logger.error(e)
         return abort(404)
 
 
@@ -128,7 +129,7 @@ def api_images():
     start = page * page_size
     end = (page + 1) * page_size
     result = [get_data(i) for i in islice(myiter, start, end)]
-    print('->> Start', start, 'end', end, 'len', len(result))
+    logger.debug('->> Start', start, 'end', end, 'len', len(result))
     return json.dumps(result)
 
 
@@ -215,12 +216,18 @@ app.register_blueprint(blueprint_api)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='RPi Object Detector')
-    # parser.add_argument('--device', help='the type of device running [pi, jetson, opencv]', dest='device', default='pi')
     parser.add_argument('-p', '--port', help='the port we\'re running on', default=5000, dest='port')
     parser.add_argument('-d', '--detector', help='the target detector [yolo, ssd]', default='yolo', dest='detector')
     parser.add_argument('-i', '--img_dir', help='the image dir [yolo, ssd]', default='./imgs', dest='image_dir')
+    parser.add_argument('-v', '--verbose', help='logging level', default=False, dest='verbose', type=bool, const=True,
+                        nargs='?')
     parser.add_argument('--cam_rotation', help='camera rotation', default=0, dest='cam_rotation')
     args = parser.parse_args()
+    if args.verbose:
+        log_level = "debug"
+    else:
+        log_level = "info"
+    initialise_logger(log_level=log_level)
 
     camera = Camera(args.image_dir, args.cam_rotation)
     detector = import_module(f'src.detectors.{args.detector}_detection').Detector()

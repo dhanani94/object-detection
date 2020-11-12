@@ -1,8 +1,7 @@
-import os
 import cv2
-import json
 import numpy as np
 import pandas as pd
+
 from src.utils import timeit, draw_boxed_text, read_json
 
 
