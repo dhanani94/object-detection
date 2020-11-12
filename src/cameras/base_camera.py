@@ -90,10 +90,10 @@ class BaseCamera(object):
         """"Generator that returns frames from the camera."""
         raise RuntimeError('Must be implemented by subclasses.')
 
-    def _thread(self, cls):
+    def _thread(self):
         """Camera background thread."""
         print('Starting camera thread.')
-        frames_iterator = cls.frames()
+        frames_iterator = self.frames()
         for frame in frames_iterator:
             self.frame = frame
             self.event.set()  # send signal to clients
