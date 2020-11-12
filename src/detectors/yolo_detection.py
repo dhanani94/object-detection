@@ -52,6 +52,7 @@ class Detector(BaseDetector):
             x2=lambda x: (x.x1 + x.w).astype(int),
             y2=lambda x: (x.y1 + x.h).astype(int),
             class_name=lambda x: (x['class_id'].astype(int).astype(str).replace(self.class_names)),
+            confidence=lambda x: (x['confidence'])
         )
         df['label'] = (df['class_name'] + ': ' +
                        df['confidence'].astype(str).str.slice(stop=4))

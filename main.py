@@ -141,8 +141,6 @@ def single_image():
     if detection:
         annotated_img, df = predictor.prediction(frame, conf_th=0.3, conf_class=[])
         detections, labels = predictor.get_detections(df)
-        logger.info(labels)
-
         if "person" in labels:
             f_base_name = datetime.now().strftime("%Y_%m_%d_%H_%M_%f")
             logger.info(f"saving image and label: {f_base_name}")

@@ -51,10 +51,12 @@ class Predictor:
         output = []
         labels = set()
         for idx, box in df.iterrows():
-            labels.add(box['label'])
+            labels.add(box['class_name'])
             output.append({
                 "points": [(box['x1'], box['y1']), (box['x2'], box['y2'])],
-                "label": box['label']
+                "label": box['class_name'],
+                "confidence": box['confidence']
+
             })
         return output, labels
 
