@@ -45,9 +45,20 @@ def initialise_logger(log_level="info", output_dir="logs"):
     main_logger.addHandler(file_handler)
 
 
+def create_dir_if_not_exist(directory):
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    return directory
+
+
 def read_json(filename):
-    with open(filename, 'r') as json_data:
-        return json.load(json_data)
+    with open(filename, 'r') as f:
+        return json.load(f)
+
+
+def write_json(filename, data):
+    with open(filename, 'w') as f:
+        return json.dump(data, f)
 
 
 def timeit(method):

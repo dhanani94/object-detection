@@ -1,8 +1,6 @@
 import cv2
-import numpy as np
-import pandas as pd
 
-from src.utils import timeit, draw_boxed_text, read_json
+from src.utils import draw_boxed_text
 
 
 class BaseDetector:
@@ -20,16 +18,6 @@ class BaseDetector:
             txt = box['label']
             image = draw_boxed_text(image, txt, txt_loc, color)
         return image
-
-    @staticmethod
-    def get_detection_dict(df):
-        output = []
-        for idx, box in df.iterrows():
-            output.append({
-                "points": [(box['x1'], box['y1']), (box['x2'], box['y2'])],
-                "label": box['label']
-            })
-        return
 
     def prediction(self, image):
         raise NotImplementedError

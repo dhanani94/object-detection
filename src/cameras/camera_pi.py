@@ -46,6 +46,18 @@ class Predictor:
         self.camera_rotation = camera_rotation
         self.ct = CentroidTracker(maxDisappeared=20)
 
+    @staticmethod
+    def get_detections(df):
+        output = []
+        labels = set()
+        for idx, box in df.iterrows():
+            labels.add(box['label'])
+            output.append({
+                "points": [(box['x1'], box['y1']), (box['x2'], box['y2'])],
+                "label": box['label']
+            })
+        return output, labels
+
     def prediction(self, img, conf_th=0.3, conf_class=None):
         if not conf_class:
             conf_class = []

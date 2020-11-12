@@ -138,9 +138,13 @@ def single_image():
     detection = bool(request.args.get('detection', False))
     tracking = bool(request.args.get('tracking', False))
     frame = camera.get_frame()
-    # TODO: save image and results here
     if detection:
         annotated_img, df = predictor.prediction(frame, conf_th=0.3, conf_class=[])
+        detections, labels = predictor.get_detections(df)
+        if "person" in labels:
+            f_base_name = datetime.now().strftime("%Y_%m_%d_%H_%M_%f")
+            cv2.imwrite(f"{detection_dir_img}/{f_base_name}.jpg", frame)
+            write_json(f"{detection_dir_label}/{f_base_name}.json", detections)
     elif tracking:
         annotated_img, df = predictor.object_track(frame, conf_th=0.5, conf_class=[1])
     else:
@@ -234,9 +238,8 @@ if __name__ == '__main__':
     detector = import_module(f'src.detectors.{args.detector}_detection').Detector()
     predictor = Predictor(detector, args.image_dir, camera_rotation=args.cam_rotation)
 
-    # if self.keep_image:
-    #     datetime.now().strftime("%Y_%m_%d_%H_%M_%f")
-    #     pass
+    detection_dir_img = create_dir_if_not_exist(f"{args.image_dir}/detections/images")
+    detection_dir_label = create_dir_if_not_exist(f"{args.image_dir}/detections/labels")
 
     app.run(
         host='0.0.0.0',
