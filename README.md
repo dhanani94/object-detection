@@ -14,6 +14,12 @@ It can use:
 
 ## Install
 TODO: 
+```
+npm install
+ng serve 
+ng build
+
+```
 
 ### Raspberry
 

@@ -138,5 +138,8 @@
       }
     }
   },
-  "defaultProject": "object-detection"
+  "defaultProject": "object-detection",
+  "cli": {
+    "analytics": false
+  }
 }
