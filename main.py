@@ -138,13 +138,14 @@ def single_image():
     detection = bool(request.args.get('detection', False))
     tracking = bool(request.args.get('tracking', False))
     frame = camera.get_frame()
+    # TODO: save image and results here
     if detection:
-        frame = predictor.prediction(frame, conf_th=0.3, conf_class=[])
+        annotated_img, df = predictor.prediction(frame, conf_th=0.3, conf_class=[])
     elif tracking:
-        frame = predictor.object_track(frame, conf_th=0.5, conf_class=[1])
-    return json.dumps(dict(img=img_to_base64(frame),
-                           width=WIDTH,
-                           height=HEIGHT))
+        annotated_img, df = predictor.object_track(frame, conf_th=0.5, conf_class=[1])
+    else:
+        annotated_img = frame
+    return json.dumps(dict(img=img_to_base64(annotated_img), width=WIDTH, height=HEIGHT))
 
 
 myconditions = dict(
@@ -171,33 +172,33 @@ def list_folder():
     return json.dumps(newdict)
 
 
-@blueprint_api.route('/api/task/status/<task_id>')
-def taskstatus(task_id):
-    # task = ObjectTracking.AsyncResult(task_id)
-    task = predictor.continous_object_tracking.AsyncResult(task_id)
-    if task.state == 'PENDING':
-        response = {
-            'state': task.state,
-            'object_id': 0,
-        }
-    elif task.state != 'FAILURE':
-        response = {
-            'state': task.state,
-            'object_id': task.info.get('object_id', 0),
-        }
-    else:
-        response = {
-            'state': task.state,
-            'object_id': task.info.get('object_id', 0),
-        }
-    return json.dumps(response)
+# @blueprint_api.route('/api/task/status/<task_id>')
+# def taskstatus(task_id):
+#     # task = ObjectTracking.AsyncResult(task_id)
+#     task = predictor.continous_object_tracking.AsyncResult(task_id)
+#     if task.state == 'PENDING':
+#         response = {
+#             'state': task.state,
+#             'object_id': 0,
+#         }
+#     elif task.state != 'FAILURE':
+#         response = {
+#             'state': task.state,
+#             'object_id': task.info.get('object_id', 0),
+#         }
+#     else:
+#         response = {
+#             'state': task.state,
+#             'object_id': task.info.get('object_id', 0),
+#         }
+#     return json.dumps(response)
 
 
-@blueprint_api.route('/api/task/launch')
-def launch_object_tracking():
-    task = predictor.object_tracking.delay()
-    # task = predictor.continous_object_tracking.delay()
-    return json.dumps({"task_id": task.id})
+# @blueprint_api.route('/api/task/launch')
+# def launch_object_tracking():
+#     task = predictor.object_tracking.delay()
+#     # task = predictor.continous_object_tracking.delay()
+#     return json.dumps({"task_id": task.id})
 
 
 # @blueprint_api.route('/api/task/kill/<task_id>')
@@ -206,10 +207,10 @@ def launch_object_tracking():
 #     return json.dumps(response)
 
 
-@blueprint_api.route('/api/beat/launch')
-def launch_beat():
-    task = predictor.periodic_capture_continous.delay()
-    return json.dumps({"task_id": task.id})
+# @blueprint_api.route('/api/beat/launch')
+# def launch_beat():
+#     task = predictor.periodic_capture_continous.delay()
+#     return json.dumps({"task_id": task.id})
 
 
 app.register_blueprint(blueprint_api)
@@ -232,6 +233,10 @@ if __name__ == '__main__':
     camera = Camera(args.image_dir, args.cam_rotation)
     detector = import_module(f'src.detectors.{args.detector}_detection').Detector()
     predictor = Predictor(detector, args.image_dir, camera_rotation=args.cam_rotation)
+
+    # if self.keep_image:
+    #     datetime.now().strftime("%Y_%m_%d_%H_%M_%f")
+    #     pass
 
     app.run(
         host='0.0.0.0',

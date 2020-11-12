@@ -51,24 +51,24 @@ class Predictor:
             conf_class = []
         output = self.detector.prediction(img)
         df = self.detector.filter_prediction(output, img, conf_th=conf_th, conf_class=conf_class)
-        img = self.detector.draw_boxes(img, df)
-        return img
+        annotated_img = self.detector.draw_boxes(img, df)
+        return annotated_img, df
 
     def object_track(self, img, conf_th=0.3, conf_class=None):
         if not conf_class:
             conf_class = []
         output = self.detector.prediction(img)
         df = self.detector.filter_prediction(output, img, conf_th=conf_th, conf_class=conf_class)
-        img = self.detector.draw_boxes(img, df)
+        annotated_img = self.detector.draw_boxes(img, df)
         boxes = df[['x1', 'y1', 'x2', 'y2']].values
         objects = self.ct.update(boxes)
         if len(boxes) > 0 and (df['class_name'].str.contains('person').any()):
             for (objectID, centroid) in objects.items():
                 text = "ID {}".format(objectID)
-                cv2.putText(img, text, (centroid[0] - 10, centroid[1] - 10),
+                cv2.putText(annotated_img, text, (centroid[0] - 10, centroid[1] - 10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-                cv2.circle(img, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
-        return img
+                cv2.circle(annotated_img, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
+        return annotated_img, df
 
     def object_tracking(self):
         myiter = glob.iglob(os.path.join(self.image_dir, '**', '*.jpg'),
@@ -111,7 +111,7 @@ class Predictor:
                         cv2.imwrite(filename_output, img)
                     time.sleep(0.300)
 
-    def capture_continous(self):
+    def capture_continuous(self):
         with PiCamera() as camera:
             camera.resolution = (1280, 960)  # twice height and widht
             camera.rotation = self.camera_rotation

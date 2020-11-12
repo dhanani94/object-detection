@@ -1,6 +1,7 @@
 import time
 import threading
 import logging
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -85,7 +86,7 @@ class BaseCamera(object):
     @staticmethod
     def frames():
         """"Generator that returns frames from the camera."""
-        raise RuntimeError('Must be implemented by subclasses.')
+        raise NotImplementedError()
 
     def _thread(self):
         """Camera background thread."""
