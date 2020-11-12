@@ -219,11 +219,12 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--port', help='the port we\'re running on', default=5000, dest='port')
     parser.add_argument('-d', '--detector', help='the target detector [yolo, ssd]', default='yolo', dest='detector')
     parser.add_argument('-i', '--img_dir', help='the image dir [yolo, ssd]', default='./imgs', dest='image_dir')
+    parser.add_argument('--cam_rotation', help='camera rotation', default=0, dest='cam_rotation')
     args = parser.parse_args()
 
-    camera = Camera(args.image_dir)
+    camera = Camera(args.image_dir, args.cam_rotation)
     detector = import_module(f'src.detectors.{args.detector}_detection').Detector()
-    predictor = Predictor(detector, args.image_dir)
+    predictor = Predictor(detector, args.image_dir, camera_rotation=args.cam_rotation)
 
     app.run(
         host='0.0.0.0',

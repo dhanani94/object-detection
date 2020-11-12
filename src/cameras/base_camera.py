@@ -59,9 +59,10 @@ class BaseCamera(object):
     last_access = 0  # time of last client access to the camera
     event = CameraEvent()
 
-    def __init__(self, image_dir):
+    def __init__(self, image_dir, camera_rotation):
         """Start the background camera thread if it isn't running yet."""
         self.image_dir = image_dir
+        self.camera_rotation = camera_rotation
 
         if BaseCamera.thread is None:
             BaseCamera.last_access = time.time()

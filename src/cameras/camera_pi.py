@@ -7,7 +7,6 @@ from functools import reduce
 
 import cv2
 import numpy as np
-from celery import Celery
 from picamera import PiCamera
 from picamera.array import PiRGBArray
 
@@ -15,22 +14,12 @@ from src.cameras.base_camera import BaseCamera
 from src.centroidtracker import CentroidTracker
 from src.utils import reduce_tracking
 
-celery = Celery("app")
-celery.conf.update(
-    broker_url='redis://localhost:6379/0',
-    result_backend='redis://localhost:6379/0',
-)
-
 
 class Camera(BaseCamera):
 
-    def __init__(self, image_dir):
-        super().__init__(image_dir)
-
-    @staticmethod
-    def frames():
+    def frames(self):
         with PiCamera() as camera:
-            camera.rotation = int(str(os.environ['CAMERA_ROTATION']))
+            camera.rotation = int(str(self.camera_rotation))
             stream = io.BytesIO()
             for _ in camera.capture_continuous(stream, 'jpeg',
                                                use_video_port=True):
@@ -49,11 +38,12 @@ class Camera(BaseCamera):
 class Predictor:
     """Docstring for Predictor. """
 
-    def __init__(self, detector, image_dir, im_width=640, im_height=480):
+    def __init__(self, detector, image_dir, im_width=640, im_height=480, camera_rotation=0):
         self.im_width = im_width
         self.im_height = im_height
         self.image_dir = image_dir
         self.detector = detector
+        self.camera_rotation = camera_rotation
         self.ct = CentroidTracker(maxDisappeared=20)
 
     def prediction(self, img, conf_th=0.3, conf_class=None):
@@ -80,14 +70,6 @@ class Predictor:
                 cv2.circle(img, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
         return img
 
-    @celery.task(bind=True)
-    def periodic_capture_continous(self):
-        interval = int(str(os.environ['BEAT_INTERVAL']))
-        while True:
-            self.capture_continous()
-            time.sleep(interval)
-
-    @celery.task(bind=True)
     def object_tracking(self):
         myiter = glob.iglob(os.path.join(self.image_dir, '**', '*.jpg'),
                             recursive=True)
@@ -132,7 +114,7 @@ class Predictor:
     def capture_continous(self):
         with PiCamera() as camera:
             camera.resolution = (1280, 960)  # twice height and widht
-            camera.rotation = int(str(os.environ['CAMERA_ROTATION']))
+            camera.rotation = self.camera_rotation
             camera.framerate = 10
             with PiRGBArray(camera, size=(self.im_width, self.im_height)) as output:
                 camera.capture(output, 'bgr', resize=(self.im_width, self.im_height))
@@ -151,8 +133,5 @@ class Predictor:
                         image = self.detector.draw_boxes(image, df)
                         classes = df['class_name'].unique().tolist()
                         hour = datetime.now().strftime("%H%M%S")
-                        filename_output = os.path.join(
-                            directory,
-                            "{}_{}_.jpg".format(hour, "-".join(classes))
-                        )
+                        filename_output = os.path.join(directory, "{}_{}_.jpg".format(hour, "-".join(classes)))
                         cv2.imwrite(filename_output, image)
