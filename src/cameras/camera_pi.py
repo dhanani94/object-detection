@@ -23,6 +23,10 @@ celery.conf.update(
 
 
 class Camera(BaseCamera):
+
+    def __init__(self, image_dir):
+        super().__init__(image_dir)
+
     @staticmethod
     def frames():
         with PiCamera() as camera:

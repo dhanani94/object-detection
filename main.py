@@ -136,7 +136,7 @@ def api_images():
 def single_image():
     detection = bool(request.args.get('detection', False))
     tracking = bool(request.args.get('tracking', False))
-    frame = Camera().get_frame()
+    frame = camera.get_frame()
     if detection:
         frame = predictor.prediction(frame, conf_th=0.3, conf_class=[])
     elif tracking:
@@ -221,6 +221,7 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--img_dir', help='the image dir [yolo, ssd]', default='./imgs', dest='image_dir')
     args = parser.parse_args()
 
+    camera = Camera(args.image_dir)
     detector = import_module(f'src.detectors.{args.detector}_detection').Detector()
     predictor = Predictor(detector, args.image_dir)
 
