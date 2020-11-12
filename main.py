@@ -143,6 +143,7 @@ def single_image():
         detections, labels = predictor.get_detections(df)
         if "person" in labels:
             f_base_name = datetime.now().strftime("%Y_%m_%d_%H_%M_%f")
+            logger.info(f"saving image and label: {f_base_name}")
             cv2.imwrite(f"{detection_dir_img}/{f_base_name}.jpg", frame)
             write_json(f"{detection_dir_label}/{f_base_name}.json", detections)
     elif tracking:
