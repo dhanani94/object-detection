@@ -64,20 +64,14 @@ class BaseCamera(object):
         self.last_access = 0  # time of last client access to the camera
         self.event = CameraEvent()
 
+    def get_frame(self):
+        """Return the current camera frame."""
         if self.thread is None:
             self.last_access = time.time()
 
             # start background frame thread
             self.thread = threading.Thread(target=self._thread)
             self.thread.start()
-
-            # wait until frames are available
-            while self.get_frame() is None:
-                time.sleep(0)
-
-    def get_frame(self):
-        """Return the current camera frame."""
-        BaseCamera.last_access = time.time()
 
         # wait for a signal from the camera thread
         self.event.wait()
