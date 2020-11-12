@@ -16,3 +16,5 @@ models/ssd_mobilenet/*
 ssd_mobilenet.tar.gz
 *.log
 *.pyc
+node_modules
+package-lock.json

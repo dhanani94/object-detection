@@ -46,7 +46,7 @@ blueprint_html = Blueprint('html', __name__, url_prefix=BASEURL)
 @blueprint_html.route('/', defaults={'filename': 'index.html'})
 @blueprint_html.route('/<path:filename>')
 def show_pages(filename):
-    return send_from_directory('./dist', filename)
+    return send_from_directory('./visual/dist', filename)
 
 
 app.register_blueprint(blueprint_html)
